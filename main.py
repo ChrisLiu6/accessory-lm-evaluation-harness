@@ -5,6 +5,9 @@ import os
 
 from lm_eval import tasks, evaluator, utils
 
+from accessory.model.meta import MetaModel
+from lm_eval.models import accessory_llm
+
 logging.getLogger("openai").setLevel(logging.WARNING)
 
 
@@ -66,8 +69,23 @@ def main():
         with open(args.description_dict_path, "r") as f:
             description_dict = json.load(f)
 
+
+
+    # ******************** begin init model ********************
+
+    model = MetaModel.from_pretrained(
+        ["/home/pgao/ldy/accessory/accessory/output/finetune/sg/alpaca_llamaAdapter/epoch3/"], "llama_adapter",
+        ['/data1/llama2/Llama-2-7b/params.json', '/home/pgao/ldy/accessory/accessory/configs/model/finetune/sg/llamaAdapter.json'],
+        '/home/pgao/ldy/accessory/tokenizer.model'
+    )
+
+    model = accessory_llm.AccessoryModel(model,)
+
+    # ********************  end  init model ********************
+
+
     results = evaluator.simple_evaluate(
-        model=args.model,
+        model=model,
         model_args=args.model_args,
         tasks=task_names,
         num_fewshot=args.num_fewshot,

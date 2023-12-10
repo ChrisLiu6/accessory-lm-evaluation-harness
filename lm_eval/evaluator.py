@@ -65,6 +65,16 @@ def simple_evaluate(
     :return
         Dictionary of results
     """
+
+    # add info about the model and few shot config
+    model_name = None
+    if isinstance(model, str):
+        model_name = model
+    elif isinstance(model, transformers.PreTrainedModel):
+        model_name = "pretrained=" + model.config._name_or_path
+    elif hasattr(model, "model_name"):
+        model_name = model.model_name
+
     random.seed(1234)
     np.random.seed(1234)
 
@@ -96,7 +106,8 @@ def simple_evaluate(
         lm = lm_eval.base.CachingLM(
             lm,
             "lm_cache/"
-            + (model if isinstance(model, str) else model.model.config._name_or_path)
+            + "llama_adapter"
+            + model_name
             + "_"
             + model_args.replace("=", "-").replace(",", "_").replace("/", "-")
             + ".db",
@@ -119,12 +130,6 @@ def simple_evaluate(
         output_base_path=output_base_path,
     )
 
-    # add info about the model and few shot config
-    model_name = None
-    if isinstance(model, str):
-        model_name = model
-    elif isinstance(model, transformers.PreTrainedModel):
-        model_name = "pretrained=" + model.config._name_or_path
     results["config"] = {
         "model": model_name,
         "model_args": model_args,
@@ -307,7 +312,6 @@ def evaluate(
         #       only in index. We could implement some kind of caching, but that would be more of a band-aid
         #       solution. we could also implement some kind of auto-grouping here;
         #       they should end up next to each other.
-
         print("Running", reqtype, "requests")
         resps = getattr(lm, reqtype)([req.args for req in reqs])
         resps = [
